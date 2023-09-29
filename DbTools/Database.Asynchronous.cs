@@ -79,7 +79,8 @@ public partial class Database {
             $"""
              insert into `{tableInfo.Name}`({columnStr})
              values({valuesStr});
-             """
+             """,
+            _connection
         );
         foreach (var columnInfo in columns) {
             cmd.Parameters.AddWithValue(columnInfo.ParameterName, columnInfo.Property.GetValue(obj));
