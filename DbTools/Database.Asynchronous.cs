@@ -132,4 +132,33 @@ public partial class Database {
 
         await cmd.ExecuteNonQueryAsync();
     }
+    
+    
+    public async IAsyncEnumerable<T> GetAsync<T>(int skip, int take = 10) where T : new() {
+        var columns = GetColumns<T>().ToList();
+        var tableInfo = GetTableName<T>();
+
+        if (_connection.State != ConnectionState.Open) _connection.Open();
+        await using var cmd = new MySqlCommand(
+            $"""
+             select * from `{tableInfo.Name}`
+             limit {skip}, {take};
+             """,
+            _connection);
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        while (reader.Read()) {
+            var obj = new T();
+            foreach (var column in columns) {
+                if (column.ColumnAttribute.Name is null) {
+                    throw new Exception($"Column attribute of property {column.Property.Name} of type {nameof(T)} " +
+                                        "does not have a defined name");
+                }
+
+                column.Property.SetValue(obj, reader.GetValue(column.ColumnAttribute.Name));
+            }
+
+            yield return obj;
+        }
+    }
 }
