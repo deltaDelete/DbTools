@@ -8,14 +8,12 @@ using System.Reflection;
 using System.Threading.Tasks;
 using MySqlConnector;
 
-namespace DbTools; 
+namespace DbTools;
 
 public partial class Database : IDisposable, IAsyncDisposable {
-
     private MySqlConnection _connection;
 
     public Database(MySqlConnectionStringBuilder stringBuilder) : this(stringBuilder.ConnectionString) {
-        
     }
 
     public Database(string connectionString) {
@@ -26,11 +24,14 @@ public partial class Database : IDisposable, IAsyncDisposable {
     private static IEnumerable<ColumnInfo> GetColumns<T>() {
         return typeof(T)
             .GetProperties()
-            .Where(it => it.GetCustomAttribute<ColumnAttribute>() is not null)
+            .Where(
+                it => it.GetCustomAttribute<ColumnAttribute>() is not null
+                      && it.GetCustomAttribute<DbTypeAttribute>() is not null
+            )
             .Select(
                 it => new ColumnInfo(
-                    it, 
-                    it.GetCustomAttribute<ColumnAttribute>()!, 
+                    it,
+                    it.GetCustomAttribute<ColumnAttribute>()!,
                     it.GetCustomAttribute<DbTypeAttribute>()!.DbType)
             );
     }
@@ -41,6 +42,7 @@ public partial class Database : IDisposable, IAsyncDisposable {
         if (tableAttribute is null) {
             throw new Exception($"Type {nameof(T)} does not have Table attribute");
         }
+
         return new TableInfo(typeof(T), tableAttribute!.Name);
     }
 
@@ -67,6 +69,7 @@ public partial class Database : IDisposable, IAsyncDisposable {
         if (prop is null) {
             throw new Exception($"Type {nameof(T)} is not annotated with Key attribute");
         }
+
         return new ColumnInfo(
             prop,
             prop.GetCustomAttribute<ColumnAttribute>()!,

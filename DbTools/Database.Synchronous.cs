@@ -41,7 +41,7 @@ public partial class Database {
         var tableInfo = GetTableName<T>();
         var primaryKey = GetPrimaryKey<T>();
 
-        using var cmd = new MySqlCommand($"select * from `{tableInfo.Name}` where `{primaryKey}` = {id}", _connection);
+        using var cmd = new MySqlCommand($"select * from `{tableInfo.Name}` where `{primaryKey.ColumnAttribute.Name}` = {id}", _connection);
         using var reader = cmd.ExecuteReader();
         while (reader.Read()) {
             var obj = new T();

@@ -17,12 +17,11 @@ public partial class Database {
         var primaryKey = GetPrimaryKey<T>();
 
         await using var cmd = new MySqlCommand(
-            """
-             select * from @tableName
+            $"""
+            select * from `{tableInfo.Name}`
             where @keyName = @keyValue
             """,
             _connection);
-        cmd.Parameters.AddWithValue("@tableName", tableInfo.Name);
         cmd.Parameters.AddWithValue("@keyName", primaryKey.ColumnAttribute.Name);
         cmd.Parameters.AddWithValue("@keyValue", id);
         await using var reader = await cmd.ExecuteReaderAsync();
@@ -48,8 +47,7 @@ public partial class Database {
         var tableInfo = GetTableName<T>();
 
         if (_connection.State != ConnectionState.Open) _connection.Open();
-        await using var cmd = new MySqlCommand("select * from @tableName", _connection);
-        cmd.Parameters.AddWithValue("@tableName", tableInfo.Name);
+        await using var cmd = new MySqlCommand($"select * from `{tableInfo.Name}`", _connection);
         await using var reader = await cmd.ExecuteReaderAsync();
 
         while (reader.Read()) {
@@ -79,11 +77,10 @@ public partial class Database {
         if (_connection.State != ConnectionState.Open) _connection.Open();
         await using var cmd = new MySqlCommand(
             $"""
-             insert into @tableName({columnStr})
+             insert into `{tableInfo.Name}`({columnStr})
              values({valuesStr});
              """
         );
-        cmd.Parameters.AddWithValue("tableName", tableInfo.Name);
         foreach (var columnInfo in columns) {
             cmd.Parameters.AddWithValue(columnInfo.ParameterName, columnInfo.Property.GetValue(obj));
         }
@@ -104,13 +101,12 @@ public partial class Database {
         if (_connection.State != ConnectionState.Open) _connection.Open();
         await using var cmd = new MySqlCommand(
             $"""
-             update @tableName
+             update `{tableInfo.Name}`
              set
                  {setters}
              where {keyName} = {id};
              """
             , _connection);
-        cmd.Parameters.AddWithValue("@tableName", tableInfo.Name);
         cmd.Parameters.AddWithValue("@keyName", keyName);
         cmd.Parameters.AddWithValue("@keyValue", id);
         foreach (var columnInfo in columns) {
@@ -126,12 +122,11 @@ public partial class Database {
 
         if (_connection.State != ConnectionState.Open) _connection.Open();
         await using var cmd = new MySqlCommand(
-            """
-            delete from @tableName
-            where @keyName = @keyValue;
-            """
+            $"""
+             delete from `{tableInfo.Name}`
+             where @keyName = @keyValue;
+             """
             , _connection);
-        cmd.Parameters.AddWithValue("@tableName", tableInfo.Name);
         cmd.Parameters.AddWithValue("@keyName", key.ColumnAttribute.Name);
         cmd.Parameters.AddWithValue("@keyValue", key.Property.GetValue(obj));
 
