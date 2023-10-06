@@ -65,7 +65,7 @@ public partial class Database {
         }
     }
 
-    public async Task InsertAsync<T>(T obj) where T : new() {
+    public async Task<int> InsertAsync<T>(T obj) where T : new() {
         var columns = GetColumns<T>()
             .Where(it => it.Property.GetCustomAttribute<KeyAttribute>() is null)
             .ToList();
@@ -79,6 +79,7 @@ public partial class Database {
             $"""
              insert into `{tableInfo.Name}`({columnStr})
              values({valuesStr});
+             select LAST_INSERT_ID();
              """,
             _connection
         );
@@ -86,7 +87,7 @@ public partial class Database {
             cmd.Parameters.AddWithValue(columnInfo.ParameterName, columnInfo.Property.GetValue(obj));
         }
 
-        await cmd.ExecuteNonQueryAsync();
+        return (int)await cmd.ExecuteScalarAsync();
     }
 
     public async Task UpdateAsync<T>(int id, T obj) where T : new() {
