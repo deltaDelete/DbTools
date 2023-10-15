@@ -19,5 +19,6 @@ public class User {
     [DbType(MySqlDbType.Int32)]
     public int GenderId { get; set; }
 
+    [ForeignKey("users.gender_id", "genders.gender_id", "genders")]
     public Gender? Gender { get; set; }
 }
