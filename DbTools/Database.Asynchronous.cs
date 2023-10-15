@@ -65,7 +65,7 @@ public partial class Database {
         }
     }
 
-    public async Task<int> InsertAsync<T>(T obj) where T : new() {
+    public async Task<object?> InsertAsync<T>(T obj) where T : new() {
         var columns = GetColumns<T>()
             .Where(it => it.Property.GetCustomAttribute<KeyAttribute>() is null)
             .ToList();
@@ -87,7 +87,7 @@ public partial class Database {
             cmd.Parameters.AddWithValue(columnInfo.ParameterName, columnInfo.Property.GetValue(obj));
         }
 
-        return (int)await cmd.ExecuteScalarAsync();
+        return await cmd.ExecuteScalarAsync();
     }
 
     public async Task UpdateAsync<T>(int id, T obj) where T : new() {
