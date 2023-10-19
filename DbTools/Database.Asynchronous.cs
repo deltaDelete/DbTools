@@ -90,7 +90,9 @@ public partial class Database {
                                         "does not have a defined name");
                 }
 
-                column.Property.SetValue(obj, reader.GetValue(column.ColumnAttribute.Name));
+                var value = reader.GetValue(column.ColumnAttribute.Name);
+                value = value is DBNull ? null : value;
+                column.Property.SetValue(obj, value);
             }
 
             foreach (var foreignKey in foreignKeys) {
