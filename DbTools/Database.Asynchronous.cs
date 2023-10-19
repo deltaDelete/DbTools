@@ -91,7 +91,11 @@ public partial class Database {
                 }
 
                 var value = reader.GetValue(column.ColumnAttribute.Name);
-                value = value is DBNull ? null : value;
+                value = value switch {
+                    DBNull => null,
+                    DateTime date => column.Property.PropertyType == typeof(DateTimeOffset) ? new DateTimeOffset(date) : date,
+                    _ => value
+                };
                 column.Property.SetValue(obj, value);
             }
 
