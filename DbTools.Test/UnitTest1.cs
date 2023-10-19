@@ -1,4 +1,6 @@
 using DbTools.Test.TestModels;
+using SqlKata;
+using SqlKata.Compilers;
 using Xunit.Abstractions;
 
 namespace DbTools.Test;
@@ -70,5 +72,27 @@ public class UnitTest1 {
         await db.RemoveAsync(userToRemove);
         var removedUser = await db.GetByIdAsync<User>(userToRemove.Id);
         Assert.Null(removedUser);
+    }
+
+    [Fact]
+    public async void QueryKataTest() {
+        await using var db = new TestDb();
+        var query = new Query().SelectRaw("count(*)").From("genders");
+        var compiler = new MySqlCompiler();
+        var compiled = compiler.Compile(query).ToString()!;
+        await using var reader = await db.ExecuteReaderAsync(compiled);
+        await reader.ReadAsync();
+        Assert.NotNull(reader.GetValue(0));
+    }
+
+    [Fact]
+    public async void QueryManualTest() {
+        await using var db = new TestDb();
+        var sql = """
+                    select count(*) from genders;
+                  """;
+        await using var reader = await db.ExecuteReaderAsync(sql);
+        await reader.ReadAsync();
+        Assert.NotNull(reader.GetValue(0));
     }
 }
